@@ -23,14 +23,14 @@
         <h2>Task Schedule</h2>
         <table>
             <thead>
-                <tr><th>Task</th><th>ETA</th><th>Actions</th></tr>
+                <tr><th>Task</th><th>Hours</th><th>ETA</th><th>Actions</th></tr>
             </thead>
             <tbody id="taskList"></tbody>
         </table>
     </div>
     <script>
         const workingHours = {};
-        const tasks = [];
+        let tasks = [];
         const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
         function createWorkingHoursInputs() {
@@ -47,8 +47,10 @@
         function addTask() {
             const name = document.getElementById("taskName").value;
             const hours = parseInt(document.getElementById("taskHours").value);
-            if (!name || !hours) return;
+            if (!name || isNaN(hours) || hours <= 0) return;
             tasks.push({ name, hours });
+            document.getElementById("taskName").value = "";
+            document.getElementById("taskHours").value = "";
             updateTaskETA();
         }
 
@@ -60,9 +62,25 @@
         function editTask(index) {
             const newName = prompt("Enter new task name:", tasks[index].name);
             const newHours = parseInt(prompt("Enter new estimated hours:", tasks[index].hours));
-            if (newName && newHours) {
+            if (newName && !isNaN(newHours) && newHours > 0) {
                 tasks[index].name = newName;
                 tasks[index].hours = newHours;
+                updateTaskETA();
+            } else {
+                alert("Invalid input. Task was not updated.");
+            }
+        }
+
+        function moveTaskUp(index) {
+            if (index > 0) {
+                [tasks[index], tasks[index - 1]] = [tasks[index - 1], tasks[index]];
+                updateTaskETA();
+            }
+        }
+
+        function moveTaskDown(index) {
+            if (index < tasks.length - 1) {
+                [tasks[index], tasks[index + 1]] = [tasks[index + 1], tasks[index]];
                 updateTaskETA();
             }
         }
@@ -80,9 +98,13 @@
                     }
                     currentDate.setDate(currentDate.getDate() + 1);
                 }
-                let row = `<tr><td>${task.name}</td><td>${currentDate.toDateString()}</td>
-                           <td><button onclick="editTask(${index})">Edit</button>
-                               <button onclick="removeTask(${index})">Remove</button></td></tr>`;
+                let row = `<tr><td>${task.name}</td><td>${task.hours}</td><td>${currentDate.toDateString()}</td>
+                           <td>
+                               <button onclick="editTask(${index})">Edit</button>
+                               <button onclick="removeTask(${index})">Remove</button>
+                               <button onclick="moveTaskUp(${index})">▲</button>
+                               <button onclick="moveTaskDown(${index})">▼</button>
+                           </td></tr>`;
                 document.getElementById("taskList").innerHTML += row;
             });
         }
