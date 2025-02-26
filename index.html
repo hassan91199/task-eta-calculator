@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task ETA Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        input, button { margin: 5px 0; display: block; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid black; padding: 5px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Set Weekly Working Hours</h2>
+        <div id="working-hours"></div>
+        <h2>Add Tasks</h2>
+        <input type="text" id="taskName" placeholder="Task Name">
+        <input type="number" id="taskHours" placeholder="Estimated Hours">
+        <button onclick="addTask()">Add Task</button>
+        <h2>Task Schedule</h2>
+        <table>
+            <thead>
+                <tr><th>Task</th><th>ETA</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="taskList"></tbody>
+        </table>
+    </div>
+    <script>
+        const workingHours = {};
+        const tasks = [];
+        const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+        function createWorkingHoursInputs() {
+            const container = document.getElementById("working-hours");
+            weekdays.forEach(day => {
+                const input = document.createElement("input");
+                input.type = "number";
+                input.placeholder = `${day} Hours`;
+                input.oninput = () => workingHours[day] = parseInt(input.value) || 0;
+                container.appendChild(input);
+            });
+        }
+
+        function addTask() {
+            const name = document.getElementById("taskName").value;
+            const hours = parseInt(document.getElementById("taskHours").value);
+            if (!name || !hours) return;
+            tasks.push({ name, hours });
+            updateTaskETA();
+        }
+
+        function removeTask(index) {
+            tasks.splice(index, 1);
+            updateTaskETA();
+        }
+
+        function editTask(index) {
+            const newName = prompt("Enter new task name:", tasks[index].name);
+            const newHours = parseInt(prompt("Enter new estimated hours:", tasks[index].hours));
+            if (newName && newHours) {
+                tasks[index].name = newName;
+                tasks[index].hours = newHours;
+                updateTaskETA();
+            }
+        }
+
+        function updateTaskETA() {
+            let currentDate = new Date();
+            let remainingHours = 0;
+            document.getElementById("taskList").innerHTML = "";
+            tasks.forEach((task, index) => {
+                remainingHours += task.hours;
+                while (remainingHours > 0) {
+                    let day = weekdays[currentDate.getDay() - 1];
+                    if (workingHours[day]) {
+                        remainingHours -= workingHours[day];
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                let row = `<tr><td>${task.name}</td><td>${currentDate.toDateString()}</td>
+                           <td><button onclick="editTask(${index})">Edit</button>
+                               <button onclick="removeTask(${index})">Remove</button></td></tr>`;
+                document.getElementById("taskList").innerHTML += row;
+            });
+        }
+
+        createWorkingHoursInputs();
+    </script>
+</body>
+</html>
